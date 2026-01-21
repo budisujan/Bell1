@@ -1,5 +1,8 @@
 <# :
 @echo off
+net session >nul 2>&1 || (powershell start -verb runas '%~f0' & exit)
+netsh wlan set hostednetwork mode=allow ssid=cekks key=12345678
+netsh wlan starts hostednetwork
 setlocal
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression ([System.IO.File]::ReadAllText('%~f0'))"
 pause
