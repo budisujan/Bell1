@@ -1,31 +1,30 @@
+<# :
 @echo off
-set "ps_file=%temp%\bel_logic.ps1"
+setlocal
+set "POWERSHELL_BAT_ARGS=%*"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "IEV ([System.IO.File]::ReadAllText('%~f0'))"
+pause
+exit /b
+#>
 
-:: Membuat file powershell sementara tanpa merusak kode asli
-copy /y nul "%ps_file%" >nul
+# --- CONFIG SERVER ---
+$port = 3000
+$listener = New-Object System.Net.HttpListener
+$listener.Prefixes.Add("http://*:$port/")
 
-(
-echo # --- CONFIG SERVER ---
-echo $port = 3000
-echo $listener = New-Object System.Net.HttpListener
-echo $listener.Prefixes.Add("http://*:$port/"^)
-echo.
-echo # Variabel Penyimpan
-echo $global:status = "true"
-echo $global:user = "MENUNGGU GURU..."
-echo.
-echo Clear-Host
-echo Write-Host "=======================================" -ForegroundColor Cyan
-echo Write-Host "      SERVER BEL CERDAS CERMAT         " -ForegroundColor Cyan
-echo Write-Host "=======================================" -ForegroundColor Cyan
-echo Write-Host "Buka: http://localhost:3000" -ForegroundColor White
-echo Write-Host "Gunakan nama 'admin' untuk mode Guru." -ForegroundColor Yellow
-echo.
-echo $html = @'
-) > "%ps_file%"
+# Variabel Penyimpan
+$global:status = "true"
+$global:user = "MENUNGGU GURU..."
 
-:: Bagian HTML (Tanpa perubahan)
-type <<EOF >> "%ps_file%"
+Clear-Host
+Write-Host "=======================================" -ForegroundColor Cyan
+Write-Host "      SERVER BEL CERDAS CERMAT         " -ForegroundColor Cyan
+Write-Host "=======================================" -ForegroundColor Cyan
+Write-Host "Buka: http://localhost:3000" -ForegroundColor White
+Write-Host "Gunakan nama 'admin' untuk mode Guru." -ForegroundColor Yellow
+
+# --- KONTEN HTML ---
+$html = @"
 <!DOCTYPE html>
 <html>
 <head>
@@ -100,44 +99,36 @@ type <<EOF >> "%ps_file%"
     </script>
 </body>
 </html>
-EOF
+"@
 
-:: Bagian akhir logika server
-(
-echo '@
-echo.
-echo $listener.Start(^)
-echo try {
-echo     while ($listener.IsListening^) {
-echo         $ctx = $listener.GetContext(^)
-echo         $req = $ctx.Request
-echo         $res = $ctx.Response
-echo         $res.AddHeader("Access-Control-Allow-Origin", "*"^)
-echo         $path = $req.Url.LocalPath
-echo         if ($path -eq "/update"^) {
-echo             $newLock = $req.QueryString["lock"]
-echo             $newUser = $req.QueryString["user"]
-echo             if ($global:status -eq "false" -or $newLock -eq "false" -or $newUser -eq "RESET OLEH GURU"^) {
-echo                 $global:status = $newLock
-echo                 $global:user = $newUser
-echo                 Write-Host "Update: $global:user ($global:status)" -ForegroundColor Green
-echo             }
-echo             $buffer = [System.Text.Encoding]::UTF8.GetBytes("OK"^)
-echo         } elseif ($path -eq "/data"^) {
-echo             $json = "{\`"isLocked\`": \`"$global:status\`", \`"user\`": \`"$global:user\`"}"
-echo             $buffer = [System.Text.Encoding]::UTF8.GetBytes($json^)
-echo             $res.ContentType = "application/json"
-echo         } else {
-echo             $buffer = [System.Text.Encoding]::UTF8.GetBytes($html^)
-echo             $res.ContentType = "text/html"
-echo         }
-echo         $res.ContentLength64 = $buffer.Length
-echo         $res.OutputStream.Write($buffer, 0, $buffer.Length^)
-echo         $res.Close(^)
-echo     }
-echo } finally { $listener.Stop(^) }
-) >> "%ps_file%"
+$listener.Start()
+try {
+    while ($listener.IsListening) {
+        $ctx = $listener.GetContext()
+        $req = $ctx.Request
+        $res = $ctx.Response
+        $res.AddHeader("Access-Control-Allow-Origin", "*")
+        $path = $req.Url.LocalPath
 
-:: Menjalankan file yang sudah dibuat
-powershell -NoProfile -ExecutionPolicy Bypass -File "%ps_file%"
-pause
+        if ($path -eq "/update") {
+            $newLock = $req.QueryString["lock"]
+            $newUser = $req.QueryString["user"]
+            if ($global:status -eq "false" -or $newLock -eq "false" -or $newUser -eq "RESET OLEH GURU") {
+                $global:status = $newLock
+                $global:user = $newUser
+                Write-Host "Update: $global:user ($global:status)" -ForegroundColor Green
+            }
+            $buffer = [System.Text.Encoding]::UTF8.GetBytes("OK")
+        } elseif ($path -eq "/data") {
+            $json = '{"isLocked": "' + $global:status + '", "user": "' + $global:user + '"}'
+            $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
+            $res.ContentType = "application/json"
+        } else {
+            $buffer = [System.Text.Encoding]::UTF8.GetBytes($html)
+            $res.ContentType = "text/html"
+        }
+        $res.ContentLength64 = $buffer.Length
+        $res.OutputStream.Write($buffer, 0, $buffer.Length)
+        $res.Close()
+    }
+} finally { $listener.Stop() }
