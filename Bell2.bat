@@ -23,7 +23,6 @@ Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host "      SERVER BEL CERDAS CERMAT         " -ForegroundColor Cyan
 Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host "Buka: http://localhost:3000" -ForegroundColor White
-Write-Host "Gunakan nama 'admin' untuk mode Guru." -ForegroundColor Yellow
 
 # --- KONTEN HTML ---
 $html = @"
@@ -38,7 +37,7 @@ $html = @"
         .bel:disabled { background: #95a5a6 !important; box-shadow: none; transform: translateY(8px); cursor: not-allowed; }
         #info { font-size: 30px; margin-bottom: 30px; font-weight: bold; color: #2c3e50; text-align: center; }
         
-        /* Panel Khusus Admin */
+
         #adminPanel { display: none; margin-top: 50px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-admin { padding: 15px 30px; font-size: 18px; margin: 5px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
         .btn-start { background: #27ae60; }
@@ -65,9 +64,9 @@ $html = @"
         const panel = document.getElementById('adminPanel');
 
         // Jika dia admin, tampilkan panel kontrol
-        if (myId.toLowerCase() === 'admin') {
+        if (myId.toLowerCase() === 'admin#123') {
             panel.style.display = 'block';
-            btn.style.display = 'none'; // Guru tidak perlu tombol bel
+            btn.style.display = 'none'; 
             info.innerText = "Mode Guru Aktif";
         }
 
