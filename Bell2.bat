@@ -57,7 +57,7 @@ $html = @"
 
     <script>
         const idDefault = 'Murid_' + Math.floor(1000 + Math.random() * 9000);
-        const myId = prompt("Masukkan Nama Anda (Ketik 'admin' untuk Guru):", idDefault) || idDefault;
+        const myId = prompt("Masukkan Nama Anda (Ketik username khusus untuk Guru):", idDefault) || idDefault;
         
         const btn = document.getElementById('btn');
         const info = document.getElementById('info');
